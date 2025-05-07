@@ -10,6 +10,14 @@ const createEnv = () => {
       .optional(),
     APP_URL: z.string().optional().default('http://localhost:3000'),
     APP_MOCK_API_PORT: z.string().optional().default('8080'),
+    OAUTH2_CLIENT_ID: z.string(),
+    OAUTH2_BASE_URL: z.string().url(),
+    OAUTH2_AUTH_PATH: z.string(),
+    OAUTH2_TOKEN_PATH: z.string(),
+    OAUTH2_LOGOUT_PATH: z.string(),
+    OAUTH2_REDIRECT_URL: z.string().url(),
+    OAUTH2_SCOPE: z.string(),
+    OAUTH2_USERINFO_PATH: z.string(),
   });
 
   const envVars = Object.entries(import.meta.env).reduce<

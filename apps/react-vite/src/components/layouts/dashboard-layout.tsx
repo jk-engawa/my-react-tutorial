@@ -1,13 +1,16 @@
 import { Home, PanelLeft, Folder, Users, User2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { NavLink, useNavigate, useNavigation } from 'react-router';
 
 import logo from '@/assets/logo.svg';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { paths } from '@/config/paths';
-import { useLogout } from '@/lib/auth';
-import { ROLES, useAuthorization } from '@/lib/authorization';
+
+import { AuthContext, type IAuthContext } from 'react-oauth2-code-pkce'
+
+// import { useLogout } from '@/lib/auth';
+// import { ROLES, useAuthorization } from '@/lib/authorization';
 import { cn } from '@/utils/cn';
 
 import {
@@ -18,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown';
 import { Link } from '../ui/link';
+// import { logOut } from '@/lib/oauth2';
 
 type SideNavigationItem = {
   name: string;
@@ -78,14 +82,15 @@ const Progress = () => {
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const logout = useLogout({
-    onSuccess: () => navigate(paths.auth.login.getHref(location.pathname)),
-  });
-  const { checkAccess } = useAuthorization();
+  const { logOut } = useContext(AuthContext) as IAuthContext;
+  // const logout = useLogout({
+  //   onSuccess: () => navigate(paths.auth.login.getHref(location.pathname)),
+  // });
+  // const { checkAccess } = useAuthorization();
   const navigation = [
     { name: 'Dashboard', to: paths.app.dashboard.getHref(), icon: Home },
     { name: 'Discussions', to: paths.app.discussions.getHref(), icon: Folder },
-    checkAccess({ allowedRoles: [ROLES.ADMIN] }) && {
+    true && {
       name: 'Users',
       to: paths.app.users.getHref(),
       icon: Users,
@@ -189,7 +194,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className={cn('block px-4 py-2 text-sm text-gray-700 w-full')}
-                onClick={() => logout.mutate({})}
+                onClick={() => logOut()}
               >
                 Sign Out
               </DropdownMenuItem>

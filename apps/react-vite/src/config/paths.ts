@@ -15,6 +15,11 @@ export const paths = {
       getHref: (redirectTo?: string | null | undefined) =>
         `/auth/login${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`,
     },
+    callback: {
+      path: '/auth/callback',
+      getHref: (redirectTo?: string | null | undefined) =>
+        `/auth/callback${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`,
+    },
   },
 
   app: {

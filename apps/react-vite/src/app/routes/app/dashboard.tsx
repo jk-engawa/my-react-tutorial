@@ -1,35 +1,42 @@
+import { useEffect, useState } from 'react';
+
 import { ContentLayout } from '@/components/layouts';
 import { useUser } from '@/lib/auth';
 import { ROLES } from '@/lib/authorization';
+import { getUser, getToken } from '@/lib/oauth2';
+import { OAuthUser } from '@/types/api';
 
-const DashboardRoute = () => {
-  const user = useUser();
+function DashboardRoute() {
+
+  const token = getToken();
+  const [data, setData] = useState<OAuthUser>();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = await getUser(token);
+      setData(user);
+    }
+
+  fetchData();
+  }, [token]
+);
+
+
+  
   return (
     <ContentLayout title="Dashboard">
       <h1 className="text-xl">
-        Welcome <b>{`${user.data?.firstName} ${user.data?.lastName}`}</b>
+      Welcome <b>{`${data?.name}`}</b>
       </h1>
-      <h4 className="my-3">
-        Your role is : <b>{user.data?.role}</b>
-      </h4>
-      <p className="font-medium">In this application you can:</p>
-      {user.data?.role === ROLES.USER && (
-        <ul className="my-4 list-inside list-disc">
-          <li>Create comments in discussions</li>
-          <li>Delete own comments</li>
-        </ul>
-      )}
-      {user.data?.role === ROLES.ADMIN && (
-        <ul className="my-4 list-inside list-disc">
-          <li>Create discussions</li>
-          <li>Edit discussions</li>
-          <li>Delete discussions</li>
-          <li>Comment on discussions</li>
-          <li>Delete all comments</li>
-        </ul>
-      )}
+      <ul className="my-4 list-inside list-disc">
+        <li>Create discussions</li>
+        <li>Edit discussions</li>
+        <li>Delete discussions</li>
+        <li>Comment on discussions</li>
+        <li>Delete all comments</li>
+      </ul>
     </ContentLayout>
-  );
+    )
 };
 
 export default DashboardRoute;

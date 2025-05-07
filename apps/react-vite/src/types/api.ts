@@ -48,3 +48,11 @@ export type Comment = Entity<{
   discussionId: string;
   author: User;
 }>;
+
+export type OAuthUser = Entity<{
+  sub: string;
+  nickname: string;
+  name: string;
+  picture: string;
+  updated_at: string;
+}>;
