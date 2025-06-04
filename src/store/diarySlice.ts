@@ -39,12 +39,28 @@ const initialState: DiaryState = {
   diaries: [],
   loading: false,
   error: null,
+  selectedTags: [],
 };
 
 const diarySlice = createSlice({
   name: 'diary',
   initialState,
-  reducers: {},
+  reducers: {
+    setSelectedTags: (state, action) => {
+      state.selectedTags = action.payload;
+    },
+    toggleTag: (state, action) => {
+      const tag = action.payload;
+      if (state.selectedTags.includes(tag)) {
+        state.selectedTags = state.selectedTags.filter(t => t !== tag);
+      } else {
+        state.selectedTags.push(tag);
+      }
+    },
+    clearSelectedTags: (state) => {
+      state.selectedTags = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Fetch diaries
@@ -77,4 +93,5 @@ const diarySlice = createSlice({
   },
 });
 
+export const { setSelectedTags, toggleTag, clearSelectedTags } = diarySlice.actions;
 export default diarySlice.reducer;

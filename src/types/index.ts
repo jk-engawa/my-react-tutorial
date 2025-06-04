@@ -20,4 +20,5 @@ export interface DiaryState {
   diaries: Diary[];
   loading: boolean;
   error: string | null;
+  selectedTags: string[];
 }

@@ -59,7 +59,7 @@ function DiaryDetail() {
   const handleDeleteConfirm = async () => {
     if (id) {
       await dispatch(deleteDiary(Number(id)));
-      navigate('/');
+      navigate('/', { replace: true });
     }
   };
 

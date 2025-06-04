@@ -116,7 +116,7 @@ function DiaryForm() {
             await dispatch(addDiary(diaryData));
         }
 
-        navigate('/');
+    navigate('/', { replace: true });
     };
 
     return (

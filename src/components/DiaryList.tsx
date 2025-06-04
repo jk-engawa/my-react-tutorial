@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -10,26 +10,49 @@ import {
   Grid,
   Chip,
   CircularProgress,
+  Paper,
+  Divider,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Description as DescriptionIcon,
+  LocalOffer as TagIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchDiaries } from '../store/diarySlice';
-import { MOODS } from '../constants';
+import { fetchDiaries, toggleTag, clearSelectedTags } from '../store/diarySlice';
+import { MOODS, SAMPLE_TAGS } from '../constants';
 import PhotoThumbnail from './PhotoThumbnail';
 
 function DiaryList() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { diaries, loading } = useAppSelector((state) => state.diary);
+  const { diaries, loading, selectedTags } = useAppSelector((state) => state.diary);
 
   useEffect(() => {
     dispatch(fetchDiaries());
   }, [dispatch]);
+
+  // 使用されているタグを収集
+  const usedTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    diaries.forEach(diary => {
+      diary.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet);
+  }, [diaries]);
+
+  // 選択されたタグでフィルタリング
+  const filteredDiaries = useMemo(() => {
+    if (selectedTags.length === 0) {
+      return diaries;
+    }
+    return diaries.filter(diary => 
+      selectedTags.some(tag => diary.tags?.includes(tag))
+    );
+  }, [diaries, selectedTags]);
 
   const handleNewDiary = () => {
     navigate('/new');
@@ -37,6 +60,14 @@ function DiaryList() {
 
   const handleDiaryClick = (id: number) => {
     navigate(`/diary/${id}`);
+  };
+
+  const handleTagToggle = (tag: string) => {
+    dispatch(toggleTag(tag));
+  };
+
+  const handleClearTags = () => {
+    dispatch(clearSelectedTags());
   };
 
   if (loading) {
@@ -53,7 +84,45 @@ function DiaryList() {
         日記一覧
       </Typography>
 
-      {diaries.length === 0 ? (
+      {/* タグフィルター */}
+      {usedTags.length > 0 && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Box display="flex" alignItems="center" mb={1}>
+            <TagIcon sx={{ mr: 1, color: 'text.secondary' }} />
+            <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+              タグで絞り込み
+            </Typography>
+            {selectedTags.length > 0 && (
+              <Chip
+                label="クリア"
+                size="small"
+                icon={<ClearIcon />}
+                onClick={handleClearTags}
+                color="secondary"
+              />
+            )}
+          </Box>
+          <Box display="flex" flexWrap="wrap" gap={1}>
+            {usedTags.map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                onClick={() => handleTagToggle(tag)}
+                color={selectedTags.includes(tag) ? 'primary' : 'default'}
+                variant={selectedTags.includes(tag) ? 'filled' : 'outlined'}
+              />
+            ))}
+          </Box>
+        </Paper>
+      )}
+
+      {selectedTags.length > 0 && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {filteredDiaries.length}件の日記が見つかりました
+        </Typography>
+      )}
+
+      {filteredDiaries.length === 0 ? (
         <Box
           display="flex"
           flexDirection="column"
@@ -63,12 +132,14 @@ function DiaryList() {
         >
           <DescriptionIcon sx={{ fontSize: 120, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h5" color="text.secondary">
-            日記を書いてみよう！
+            {selectedTags.length > 0 
+              ? '該当する日記が見つかりません' 
+              : '日記を書いてみよう！'}
           </Typography>
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {diaries.map((diary) => (
+          {filteredDiaries.map((diary) => (
             <Grid size={12} key={diary.id}>
               <Card
                 sx={{ cursor: 'pointer', '&:hover': { boxShadow: 4 } }}
@@ -92,6 +163,7 @@ function DiaryList() {
                           label={tag}
                           size="small"
                           sx={{ mr: 1, mb: 1 }}
+                          color={selectedTags.includes(tag) ? 'primary' : 'default'}
                         />
                       ))}
                     </Box>
