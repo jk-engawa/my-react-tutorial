@@ -31,6 +31,7 @@ import { MOODS, SAMPLE_TAGS } from '../constants';
 import { convertMultipleToBase64 } from '../utils/imageHandler';
 import { diaryDB } from '../database/db';
 import { type MoodType } from '../types';
+import PhotoGallery from './PhotoGallery';
 
 function DiaryForm() {
     const navigate = useNavigate();
@@ -218,102 +219,15 @@ function DiaryForm() {
                     </Box>
 
                     {photos.length > 0 && (
-                        <Grid container spacing={1} sx={{ mt: 2 }}>
-                            {photos.slice(0, 2).map((photo, index) => (
-                                <Grid size={6} key={index}>
-                                    <Box position="relative" />
-                                    <Box
-                                        component="img"
-                                        src={photo}
-                                        alt={`写真${index + 1}`}
-                                        sx={{
-                                            width: 100,
-                                            height: 100,
-                                            objectFit: 'cover',
-                                            borderRadius: 1,
-                                        }}
-                                    />
-                                    <IconButton
-                                        size="small"
-                                        sx={{
-                                            position: 'absolute',
-                                            top: -8,
-                                            right: -8,
-                                            backgroundColor: 'background.paper',
-                                        }}
-                                        onClick={() => handleRemovePhoto(index)}
-                                    >
-                                        <CloseIcon fontSize="small" />
-                                    </IconButton>
-                                </Grid>
-
-
-                                // <Grid item key={index}>
-                                //   <Box position="relative">
-                                //     <Box
-                                //       component="img"
-                                //       src={photo}
-                                //       alt={`写真${index + 1}`}
-                                //       sx={{
-                                //         width: 100,
-                                //         height: 100,
-                                //         objectFit: 'cover',
-                                //         borderRadius: 1,
-                                //       }}
-                                //     />
-                                //     <IconButton
-                                //       size="small"
-                                //       sx={{
-                                //         position: 'absolute',
-                                //         top: -8,
-                                //         right: -8,
-                                //         backgroundColor: 'background.paper',
-                                //       }}
-                                //       onClick={() => handleRemovePhoto(index)}
-                                //     >
-                                //       <CloseIcon fontSize="small" />
-                                //     </IconButton>
-                                //   </Box>
-                                // </Grid>
-                            ))}
-                            {photos.length > 2 && (
-                                <Grid size={6}>
-                                    <Box
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        sx={{
-                                            width: 100,
-                                            height: 100,
-                                            backgroundColor: 'grey.200',
-                                            borderRadius: 1,
-                                        }}
-                                    >
-                                        <Typography variant="body1">
-                                            +{photos.length - 2}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                // <Grid item>
-                                //     <Box
-                                //         display="flex"
-                                //         alignItems="center"
-                                //         justifyContent="center"
-                                //         sx={{
-                                //             width: 100,
-                                //             height: 100,
-                                //             backgroundColor: 'grey.200',
-                                //             borderRadius: 1,
-                                //         }}
-                                //     >
-                                //         <Typography variant="body1">
-                                //             +{photos.length - 2}
-                                //         </Typography>
-                                //     </Box>
-                                // </Grid>
-                            )}
-                        </Grid>
+                        <Box mt={2}>
+                            <PhotoGallery
+                                photos={photos}
+                                columns={3}
+                                height={photos.length === 1 ? 300 : 200}
+                                editable={true}
+                                onRemove={handleRemovePhoto}
+                            />
+                        </Box>
                     )}
                 </Box>
 

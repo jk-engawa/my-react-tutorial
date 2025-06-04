@@ -20,6 +20,7 @@ import { ja } from 'date-fns/locale';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchDiaries } from '../store/diarySlice';
 import { MOODS } from '../constants';
+import PhotoThumbnail from './PhotoThumbnail';
 
 function DiaryList() {
   const dispatch = useAppDispatch();
@@ -111,38 +112,8 @@ function DiaryList() {
                   </Typography>
 
                   {diary.photos && diary.photos.length > 0 && (
-                    <Box display="flex" gap={1} mt={2}>
-                      {diary.photos.slice(0, 2).map((photo, index) => (
-                        <Box
-                          key={index}
-                          component="img"
-                          src={photo}
-                          alt={`写真${index + 1}`}
-                          sx={{
-                            width: 60,
-                            height: 60,
-                            objectFit: 'cover',
-                            borderRadius: 1,
-                          }}
-                        />
-                      ))}
-                      {diary.photos.length > 2 && (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          sx={{
-                            width: 60,
-                            height: 60,
-                            backgroundColor: 'grey.200',
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary">
-                            +{diary.photos.length - 2}
-                          </Typography>
-                        </Box>
-                      )}
+                    <Box mt={2}>
+                      <PhotoThumbnail photos={diary.photos} />
                     </Box>
                   )}
                 </CardContent>

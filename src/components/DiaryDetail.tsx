@@ -14,8 +14,6 @@ import {
   DialogContentText,
   DialogActions,
   Snackbar,
-  ImageList,
-  ImageListItem,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -30,6 +28,7 @@ import { deleteDiary } from '../store/diarySlice';
 import { diaryDB } from '../database/db';
 import { MOODS } from '../constants';
 import { type Diary } from '../types';
+import PhotoGallery from './PhotoGallery';
 
 function DiaryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -120,18 +119,11 @@ function DiaryDetail() {
 
         {diary.photos && diary.photos.length > 0 && (
           <Box mb={3}>
-            <ImageList cols={3} gap={8}>
-              {diary.photos.map((photo, index) => (
-                <ImageListItem key={index}>
-                  <img
-                    src={photo}
-                    alt={`写真${index + 1}`}
-                    loading="lazy"
-                    style={{ borderRadius: 4 }}
+            <PhotoGallery 
+              photos={diary.photos} 
+              columns={diary.photos.length === 1 ? 1 : diary.photos.length === 2 ? 2 : 3}
+              height={diary.photos.length === 1 ? 300 : 200}
                   />
-                </ImageListItem>
-              ))}
-            </ImageList>
           </Box>
         )}
 
