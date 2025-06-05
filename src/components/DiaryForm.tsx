@@ -14,6 +14,7 @@ import {
     Grid,
     Menu,
     MenuItem,
+  Alert,
 } from '@mui/material';
 import {
     PhotoCamera as PhotoCameraIcon,
@@ -28,10 +29,11 @@ import { ja } from 'date-fns/locale';
 import { useAppDispatch } from '../store/hooks';
 import { addDiary, updateDiary } from '../store/diarySlice';
 import { MOODS, SAMPLE_TAGS } from '../constants';
-import { convertMultipleToBase64 } from '../utils/imageHandler';
+import { convertToBase64 } from '../utils/imageHandler';
 import { diaryDB } from '../database/db';
 import { type MoodType } from '../types';
 import PhotoGallery from './PhotoGallery';
+import ImageUploadInfo from './ImageUploadInfo';
 
 function DiaryForm() {
     const navigate = useNavigate();
@@ -46,6 +48,9 @@ function DiaryForm() {
     const [content, setContent] = useState('');
     const [photos, setPhotos] = useState<string[]>([]);
     const [photoMenuAnchor, setPhotoMenuAnchor] = useState<HTMLElement | null>(null);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
     useEffect(() => {
         if (id) {
@@ -89,8 +94,27 @@ function DiaryForm() {
     const handlePhotoSelect = async (event: ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files && files.length > 0) {
-            const base64Photos = await convertMultipleToBase64(files);
+      setIsProcessingImages(true);
+      setProcessedCount(0);
+      setTotalCount(files.length);
+      
+      try {
+        const base64Photos: string[] = [];
+        
+        // 1枚ずつ処理して進捗を表示
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const base64 = await convertToBase64(file);
+          base64Photos.push(base64);
+          setProcessedCount(i + 1);
+        }
+        
             setPhotos((prev) => [...prev, ...base64Photos]);
+      } finally {
+        setIsProcessingImages(false);
+        setProcessedCount(0);
+        setTotalCount(0);
+      }
         }
         handlePhotoMenuClose();
     };
@@ -126,6 +150,9 @@ function DiaryForm() {
             </Typography>
 
             <Paper sx={{ p: 3, mt: 3 }}>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          写真は自動的にiPhoneに最適なサイズに調整されます（最大1200px、品質80%）
+        </Alert>
                 <Box sx={{ mb: 3 }}>
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
                         <DatePicker
@@ -185,6 +212,7 @@ function DiaryForm() {
                             variant="outlined"
                             startIcon={<PhotoCameraIcon />}
                             onClick={handlePhotoMenuOpen}
+              disabled={isProcessingImages}
                         >
                             写真を追加
                         </Button>
@@ -218,6 +246,12 @@ function DiaryForm() {
                         />
                     </Box>
 
+          <ImageUploadInfo 
+            isProcessing={isProcessingImages}
+            processedCount={processedCount}
+            totalCount={totalCount}
+          />
+
                     {photos.length > 0 && (
                         <Box mt={2}>
                             <PhotoGallery
@@ -227,6 +261,9 @@ function DiaryForm() {
                                 editable={true}
                                 onRemove={handleRemovePhoto}
                             />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                ※ 画像は自動的に最適化されます
+              </Typography>
                         </Box>
                     )}
                 </Box>
