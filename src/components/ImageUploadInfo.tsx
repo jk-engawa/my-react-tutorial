@@ -1,5 +1,5 @@
-import { Box, Typography, LinearProgress } from '@mui/material';
-import { Info as InfoIcon } from '@mui/icons-material';
+import { Box, Typography, LinearProgress } from "@mui/material";
+import { Info as InfoIcon } from "@mui/icons-material";
 
 interface ImageUploadInfoProps {
   isProcessing: boolean;
@@ -7,7 +7,11 @@ interface ImageUploadInfoProps {
   totalCount?: number;
 }
 
-function ImageUploadInfo({ isProcessing, processedCount = 0, totalCount = 0 }: ImageUploadInfoProps) {
+function ImageUploadInfo({
+  isProcessing,
+  processedCount = 0,
+  totalCount = 0,
+}: ImageUploadInfoProps) {
   if (!isProcessing) return null;
 
   const progress = totalCount > 0 ? (processedCount / totalCount) * 100 : 0;

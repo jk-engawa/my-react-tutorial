@@ -1,7 +1,8 @@
 export interface Diary {
-  id?: number;
+  id?: string; // UUIDに変更
   date: string;
-  mood: MoodType;
+  mood: number; // 1-5の数値に変更
+  moodDetails: string[]; // 詳細な気持ち
   tags: string[];
   content: string;
   photos: string[];
@@ -9,16 +10,17 @@ export interface Diary {
   updatedAt?: string;
 }
 
-export type MoodType = 'happy' | 'neutral' | 'sad';
+export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface MoodOption {
   icon: string;
   label: string;
+  details: string[];
 }
 
 export interface DiaryState {
   diaries: Diary[];
   loading: boolean;
   error: string | null;
-  selectedTags: string[];
+  selectedTag: string; // ALLまたは特定のタグ
 }

@@ -1,64 +1,50 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { diaryDB } from '../database/db';
-import { type Diary, type DiaryState } from '../types';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { diaryDB } from "../database/db";
+import { type Diary, type DiaryState } from "../types";
 
 // 非同期アクション
-export const fetchDiaries = createAsyncThunk(
-  'diary/fetchDiaries',
-  async () => {
-    const diaries = await diaryDB.getAll();
-    return diaries;
-  }
-);
+export const fetchDiaries = createAsyncThunk("diary/fetchDiaries", async () => {
+  const diaries = await diaryDB.getAll();
+  return diaries;
+});
 
 export const addDiary = createAsyncThunk(
-  'diary/addDiary',
-  async (diaryData: Omit<Diary, 'id' | 'createdAt' | 'updatedAt'>) => {
+  "diary/addDiary",
+  async (diaryData: Omit<Diary, "id" | "createdAt" | "updatedAt">) => {
     const id = await diaryDB.add(diaryData);
     return { ...diaryData, id } as Diary;
-  }
+  },
 );
 
 export const updateDiary = createAsyncThunk(
-  'diary/updateDiary',
-  async ({ id, data }: { id: number; data: Partial<Diary> }) => {
+  "diary/updateDiary",
+  async ({ id, data }: { id: string; data: Partial<Diary> }) => {
     await diaryDB.update(id, data);
     return { id, data };
-  }
+  },
 );
 
 export const deleteDiary = createAsyncThunk(
-  'diary/deleteDiary',
-  async (id: number) => {
+  "diary/deleteDiary",
+  async (id: string) => {
     await diaryDB.delete(id);
     return id;
-  }
+  },
 );
 
 const initialState: DiaryState = {
   diaries: [],
   loading: false,
   error: null,
-  selectedTags: [],
+  selectedTag: "ALL",
 };
 
 const diarySlice = createSlice({
-  name: 'diary',
+  name: "diary",
   initialState,
   reducers: {
-    setSelectedTags: (state, action) => {
-      state.selectedTags = action.payload;
-    },
-    toggleTag: (state, action) => {
-      const tag = action.payload;
-      if (state.selectedTags.includes(tag)) {
-        state.selectedTags = state.selectedTags.filter(t => t !== tag);
-      } else {
-        state.selectedTags.push(tag);
-      }
-    },
-    clearSelectedTags: (state) => {
-      state.selectedTags = [];
+    setSelectedTag: (state, action) => {
+      state.selectedTag = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -73,7 +59,7 @@ const diarySlice = createSlice({
       })
       .addCase(fetchDiaries.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch diaries';
+        state.error = action.error.message || "Failed to fetch diaries";
       })
       // Add diary
       .addCase(addDiary.fulfilled, (state, action) => {
@@ -81,17 +67,22 @@ const diarySlice = createSlice({
       })
       // Update diary
       .addCase(updateDiary.fulfilled, (state, action) => {
-        const index = state.diaries.findIndex(d => d.id === action.payload.id);
+        const index = state.diaries.findIndex(
+          (d) => d.id === action.payload.id,
+        );
         if (index !== -1) {
-          state.diaries[index] = { ...state.diaries[index], ...action.payload.data };
+          state.diaries[index] = {
+            ...state.diaries[index],
+            ...action.payload.data,
+          };
         }
       })
       // Delete diary
       .addCase(deleteDiary.fulfilled, (state, action) => {
-        state.diaries = state.diaries.filter(d => d.id !== action.payload);
+        state.diaries = state.diaries.filter((d) => d.id !== action.payload);
       });
   },
 });
 
-export const { setSelectedTags, toggleTag, clearSelectedTags } = diarySlice.actions;
+export const { setSelectedTag } = diarySlice.actions;
 export default diarySlice.reducer;

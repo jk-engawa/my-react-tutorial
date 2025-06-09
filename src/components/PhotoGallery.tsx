@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Box, ImageList, ImageListItem, IconButton } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
+import { useState } from "react";
+import { Box, ImageList, ImageListItem, IconButton } from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 interface PhotoGalleryProps {
   photos: string[];
@@ -13,13 +13,13 @@ interface PhotoGalleryProps {
   onRemove?: (index: number) => void;
 }
 
-function PhotoGallery({ 
-  photos, 
-  columns = 3, 
-  gap = 8, 
+function PhotoGallery({
+  photos,
+  columns = 3,
+  gap = 8,
   height = 200,
   editable = false,
-  onRemove
+  onRemove,
 }: PhotoGalleryProps) {
   const [open, setOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -37,7 +37,8 @@ function PhotoGallery({
   const slides = photos.map((photo) => ({ src: photo }));
 
   // 写真の数に応じてカラム数を調整
-  const actualColumns = photos.length === 1 ? 1 : photos.length === 2 ? 2 : columns;
+  const actualColumns =
+    photos.length === 1 ? 1 : photos.length === 2 ? 2 : columns;
 
   return (
     <>
@@ -46,13 +47,13 @@ function PhotoGallery({
           <ImageListItem
             key={index}
             sx={{
-              position: 'relative',
-              cursor: 'pointer',
-              overflow: 'hidden',
-              '& img': {
-                transition: 'transform 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
+              position: "relative",
+              cursor: "pointer",
+              overflow: "hidden",
+              "& img": {
+                transition: "transform 0.3s ease",
+                "&:hover": {
+                  transform: "scale(1.05)",
                 },
               },
             }}
@@ -62,9 +63,9 @@ function PhotoGallery({
               alt={`写真${index + 1}`}
               loading="lazy"
               style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
                 borderRadius: 4,
               }}
               onClick={() => handlePhotoClick(index)}
@@ -73,13 +74,13 @@ function PhotoGallery({
               <IconButton
                 size="small"
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   top: 4,
                   right: 4,
-                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
                   },
                 }}
                 onClick={(e) => handleRemove(e, index)}

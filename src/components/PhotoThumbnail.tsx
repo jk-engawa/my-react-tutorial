@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
+import { useState } from "react";
+import { Box, Typography } from "@mui/material";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 interface PhotoThumbnailProps {
   photos: string[];
@@ -9,7 +9,11 @@ interface PhotoThumbnailProps {
   size?: number;
 }
 
-function PhotoThumbnail({ photos, maxDisplay = 2, size = 60 }: PhotoThumbnailProps) {
+function PhotoThumbnail({
+  photos,
+  maxDisplay = 2,
+  size = 60,
+}: PhotoThumbnailProps) {
   const [open, setOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
 
@@ -32,12 +36,12 @@ function PhotoThumbnail({ photos, maxDisplay = 2, size = 60 }: PhotoThumbnailPro
             sx={{
               width: size,
               height: size,
-              objectFit: 'cover',
+              objectFit: "cover",
               borderRadius: 1,
-              cursor: 'pointer',
-              transition: 'transform 0.2s ease',
-              '&:hover': {
-                transform: 'scale(1.05)',
+              cursor: "pointer",
+              transition: "transform 0.2s ease",
+              "&:hover": {
+                transform: "scale(1.05)",
               },
             }}
             onClick={() => handlePhotoClick(index)}
@@ -51,12 +55,12 @@ function PhotoThumbnail({ photos, maxDisplay = 2, size = 60 }: PhotoThumbnailPro
             sx={{
               width: size,
               height: size,
-              backgroundColor: 'grey.300',
+              backgroundColor: "grey.300",
               borderRadius: 1,
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
-              '&:hover': {
-                backgroundColor: 'grey.400',
+              cursor: "pointer",
+              transition: "background-color 0.2s ease",
+              "&:hover": {
+                backgroundColor: "grey.400",
               },
             }}
             onClick={() => handlePhotoClick(maxDisplay)}
