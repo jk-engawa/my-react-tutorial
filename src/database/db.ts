@@ -1,5 +1,4 @@
 import Dexie, { type Table } from "dexie";
-import { v4 as uuidv4 } from "uuid";
 import { type Diary } from "../types";
 
 // Dexieの拡張クラス
@@ -28,19 +27,14 @@ export const diaryDB = {
     return await db.diaries.get(id);
   },
 
-  // 日記を追加
-  async add(
-    diary: Omit<Diary, "id" | "createdAt" | "updatedAt">,
-  ): Promise<string> {
+  // 日記を追加（既にIDは設定されている前提）
+  async add(diary: Diary): Promise<void> {
     const now = new Date().toISOString();
-    const id = uuidv4();
     await db.diaries.add({
       ...diary,
-      id,
       createdAt: now,
       updatedAt: now,
     });
-    return id;
   },
 
   // 日記を更新

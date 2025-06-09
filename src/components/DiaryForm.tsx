@@ -32,10 +32,11 @@ import { addDiary, updateDiary } from "../store/diarySlice";
 import { MOODS, SAMPLE_TAGS } from "../constants";
 import { convertToBase64 } from "../utils/imageHandler";
 import { diaryDB } from "../database/db";
-import { type MoodLevel } from "../types";
+import { type MoodLevel, type Diary } from "../types";
 import PhotoGallery from "./PhotoGallery";
 import ImageUploadInfo from "./ImageUploadInfo";
 import MoodSelector from "./MoodSelector";
+import { v4 as uuidv4 } from "uuid";
 
 function DiaryForm() {
   const navigate = useNavigate();
@@ -58,16 +59,16 @@ function DiaryForm() {
   const [processedCount, setProcessedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
+  const [existingDiary, setExistingDiary] = useState<Diary | null>(null);
 
   useEffect(() => {
     if (id) {
       loadDiary();
-    } else {
-      // 新規作成時は自由記述欄にフォーカス
-      setTimeout(() => {
-        contentInputRef.current?.focus();
-      }, 100);
     }
+    // 自由記述欄にフォーカス
+    setTimeout(() => {
+      contentInputRef.current?.focus();
+    }, 100);
   }, [id]);
 
   const loadDiary = async () => {
@@ -136,18 +137,23 @@ function DiaryForm() {
   const handleSubmit = async () => {
     if (!dateTime) return;
 
-    const diaryData = {
+    const diaryData: Diary = {
+      id: id || uuidv4(), // 編集時は既存ID、新規時は新しいUUID
       date: dateTime.toISOString(),
       mood,
       moodDetails: moodDetails.length > 0 ? moodDetails : [],
       tags: selectedTags,
       content,
       photos,
+      createdAt: existingDiary?.createdAt, // 既存の場合は保持
+      updatedAt: existingDiary?.updatedAt, // DBで更新される
     };
 
-    if (id) {
-      await dispatch(updateDiary({ id, data: diaryData }));
+    if (existingDiary?.createdAt) {
+      // 既存日記の更新（createdAtが存在する）
+      await dispatch(updateDiary({ id: diaryData.id, data: diaryData }));
     } else {
+      // 新規日記の作成（createdAtが存在しない）
       await dispatch(addDiary(diaryData));
     }
 

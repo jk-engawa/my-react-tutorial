@@ -10,9 +10,9 @@ export const fetchDiaries = createAsyncThunk("diary/fetchDiaries", async () => {
 
 export const addDiary = createAsyncThunk(
   "diary/addDiary",
-  async (diaryData: Omit<Diary, "id" | "createdAt" | "updatedAt">) => {
-    const id = await diaryDB.add(diaryData);
-    return { ...diaryData, id } as Diary;
+  async (diaryData: Diary) => {
+    await diaryDB.add(diaryData);
+    return diaryData;
   },
 );
 
