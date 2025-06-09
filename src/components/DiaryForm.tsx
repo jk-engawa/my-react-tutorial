@@ -21,7 +21,7 @@ import {
     Close as CloseIcon,
     Save as SaveIcon,
 } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { PickersTextField } from '@mui/x-date-pickers';
@@ -42,7 +42,7 @@ function DiaryForm() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
 
-    const [date, setDate] = useState<Date | null>(new Date());
+  const [dateTime, setDateTime] = useState<Date | null>(new Date());
     const [mood, setMood] = useState<MoodType>('neutral');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [content, setContent] = useState('');
@@ -61,7 +61,7 @@ function DiaryForm() {
     const loadDiary = async () => {
         const diary = await diaryDB.getById(Number(id));
         if (diary) {
-            setDate(new Date(diary.date));
+      setDateTime(new Date(diary.date));
             setMood(diary.mood);
             setSelectedTags(diary.tags || []);
             setContent(diary.content);
@@ -124,10 +124,10 @@ function DiaryForm() {
     };
 
     const handleSubmit = async () => {
-        if (!date) return;
+    if (!dateTime) return;
 
         const diaryData = {
-            date: date.toISOString(),
+      date: dateTime.toISOString(),
             mood,
             tags: selectedTags,
             content,
@@ -155,11 +155,12 @@ function DiaryForm() {
         </Alert>
                 <Box sx={{ mb: 3 }}>
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
-                        <DatePicker
-                            label="日付"
-                            value={date}
-                            onChange={(newValue) => setDate(newValue)}
+                        <DateTimePicker
+                            label="日時"
+                            value={dateTime}
+                            onChange={(newValue) => setDateTime(newValue)}
                             slots={{ textField: (pickerFieldProps) => <PickersTextField {...pickerFieldProps} fullWidth /> }}
+                            format="yyyy年MM月dd日 HH:mm"
                         />
                     </LocalizationProvider>
                 </Box>

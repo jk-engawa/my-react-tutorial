@@ -18,6 +18,7 @@ import {
   Description as DescriptionIcon,
   LocalOffer as TagIcon,
   Clear as ClearIcon,
+  AccessTime as TimeIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -25,6 +26,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchDiaries, toggleTag, clearSelectedTags } from '../store/diarySlice';
 import { MOODS, SAMPLE_TAGS } from '../constants';
 import PhotoThumbnail from './PhotoThumbnail';
+import { type Diary } from '../types';
 
 function DiaryList() {
   const dispatch = useAppDispatch();
@@ -54,6 +56,33 @@ function DiaryList() {
     );
   }, [diaries, selectedTags]);
 
+  // 日付でグルーピング
+  const groupedDiaries = useMemo(() => {
+    const groups: { [key: string]: Diary[] } = {};
+    
+    filteredDiaries.forEach(diary => {
+      const dateKey = format(new Date(diary.date), 'yyyy-MM-dd');
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(diary);
+    });
+
+    // 各グループ内で時間順にソート
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    });
+
+    return groups;
+  }, [filteredDiaries]);
+
+  // ソートされた日付キー
+  const sortedDateKeys = useMemo(() => {
+    return Object.keys(groupedDiaries).sort((a, b) => b.localeCompare(a));
+  }, [groupedDiaries]);
+
   const handleNewDiary = () => {
     navigate('/new');
   };
@@ -68,6 +97,12 @@ function DiaryList() {
 
   const handleClearTags = () => {
     dispatch(clearSelectedTags());
+  };
+
+  // 本文を最大20文字に制限
+  const truncateContent = (content: string, maxLength: number = 20) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
   };
 
   if (loading) {
@@ -138,31 +173,49 @@ function DiaryList() {
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={3}>
-          {filteredDiaries.map((diary) => (
-            <Grid size={12} key={diary.id}>
+        <Box>
+          {sortedDateKeys.map((dateKey) => (
+            <Box key={dateKey} sx={{ mb: 4 }}>
+              <Typography 
+                variant="h6" 
+                color="primary" 
+                sx={{ mb: 2, fontWeight: 'bold' }}
+              >
+                {format(new Date(dateKey), 'yyyy年MM月dd日 (E)', { locale: ja })}
+              </Typography>
+              
+              <Grid container spacing={2}>
+                {groupedDiaries[dateKey].map((diary) => (
+                  <Grid size={12} key={diary.id}>
               <Card
-                sx={{ cursor: 'pointer', '&:hover': { boxShadow: 4 } }}
+                      sx={{ 
+                        cursor: 'pointer', 
+                        '&:hover': { boxShadow: 4 },
+                        position: 'relative',
+                      }}
                 onClick={() => handleDiaryClick(diary.id!)}
               >
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6" component="div">
-                      {format(new Date(diary.date), 'yyyy年MM月dd日 (E)', { locale: ja })}
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <TimeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {format(new Date(diary.date), 'HH:mm')}
                     </Typography>
+                          </Box>
                     <Typography variant="h4">
                       {MOODS[diary.mood]?.icon || '😐'}
                     </Typography>
                   </Box>
 
                   {diary.tags && diary.tags.length > 0 && (
-                    <Box mb={2}>
+                          <Box mb={1}>
                       {diary.tags.map((tag, index) => (
                         <Chip
                           key={index}
                           label={tag}
                           size="small"
-                          sx={{ mr: 1, mb: 1 }}
+                                sx={{ mr: 1 }}
                           color={selectedTags.includes(tag) ? 'primary' : 'default'}
                         />
                       ))}
@@ -172,19 +225,13 @@ function DiaryList() {
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                    }}
+                          sx={{ mb: diary.photos && diary.photos.length > 0 ? 1 : 0 }}
                   >
-                    {diary.content}
+                          {truncateContent(diary.content)}
                   </Typography>
 
                   {diary.photos && diary.photos.length > 0 && (
-                    <Box mt={2}>
+                          <Box mt={1}>
                       <PhotoThumbnail photos={diary.photos} />
                     </Box>
                   )}
@@ -193,6 +240,9 @@ function DiaryList() {
             </Grid>
           ))}
         </Grid>
+            </Box>
+          ))}
+        </Box>
       )}
 
       <Fab

@@ -97,9 +97,14 @@ function DiaryDetail() {
 
       <Paper sx={{ p: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box>
           <Typography variant="h6">
             {format(new Date(diary.date), 'yyyy年MM月dd日 (E)', { locale: ja })}
           </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {format(new Date(diary.date), 'HH:mm')}
+            </Typography>
+          </Box>
           <Typography variant="h3">
             {MOODS[diary.mood]?.icon || '😐'}
           </Typography>
