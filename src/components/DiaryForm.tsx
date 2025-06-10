@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type ChangeEvent, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
@@ -27,9 +27,15 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { PickersTextField } from "@mui/x-date-pickers";
 import { ja } from "date-fns/locale";
-import { useAppDispatch } from "../store/hooks";
-import { addDiary, updateDiary } from "../store/diarySlice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { addDiary, updateDiary, fetchDiaries } from "../store/diarySlice";
 import { MOODS, SAMPLE_TAGS } from "../constants";
+import {
+  TAG_PLACEHOLDERS,
+  TAG_PLACEHOLDERS_BEGINNER,
+  DEFAULT_PLACEHOLDERS,
+  MULTI_TAG_PLACEHOLDERS,
+} from "../constants/placeholders";
 import { convertToBase64 } from "../utils/imageHandler";
 import { diaryDB } from "../database/db";
 import { type MoodLevel, type Diary } from "../types";
@@ -46,6 +52,9 @@ function DiaryForm() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const contentInputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Redux stateから全日記を取得
+  const { diaries } = useAppSelector((state) => state.diary);
+
   const [dateTime, setDateTime] = useState<Date | null>(new Date());
   const [mood, setMood] = useState<number>(3);
   const [moodDetails, setMoodDetails] = useState<string[]>([]);
@@ -61,11 +70,55 @@ function DiaryForm() {
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
   const [existingDiary, setExistingDiary] = useState<Diary | null>(null);
 
+  // タグごとの日記数をカウント
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    diaries.forEach((diary) => {
+      diary.tags?.forEach((tag) => {
+        counts[tag] = (counts[tag] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [diaries]);
+
+  // タグに応じたプレースホルダーを選択
+  const placeholder = useMemo(() => {
+    if (selectedTags.length === 0) {
+      // タグが選択されていない場合
+      const randomIndex = Math.floor(
+        Math.random() * DEFAULT_PLACEHOLDERS.length,
+      );
+      return DEFAULT_PLACEHOLDERS[randomIndex];
+    } else if (selectedTags.length === 1) {
+      // 単一タグが選択されている場合
+      const tag = selectedTags[0];
+      const count = tagCounts[tag] || 0;
+
+      // 3個未満の場合は初心者向けプレースホルダー
+      const placeholders =
+        count < 3
+          ? TAG_PLACEHOLDERS_BEGINNER[tag] || DEFAULT_PLACEHOLDERS
+          : TAG_PLACEHOLDERS[tag] || DEFAULT_PLACEHOLDERS;
+
+      const randomIndex = Math.floor(Math.random() * placeholders.length);
+      return placeholders[randomIndex];
+    } else {
+      // 複数タグが選択されている場合
+      const randomIndex = Math.floor(
+        Math.random() * MULTI_TAG_PLACEHOLDERS.length,
+      );
+      return MULTI_TAG_PLACEHOLDERS[randomIndex];
+    }
+  }, [selectedTags, tagCounts]);
+
   useEffect(() => {
+    // 日記データを取得（タグカウントのため）
+    dispatch(fetchDiaries());
+
     if (id) {
       loadDiary();
     }
-    // 自由記述欄にフォーカス
+    // 新規作成時は自由記述欄にフォーカス
     setTimeout(() => {
       contentInputRef.current?.focus();
     }, 100);
@@ -245,6 +298,7 @@ function DiaryForm() {
             fullWidth
             inputRef={contentInputRef}
             autoFocus={!id}
+            placeholder={placeholder}
           />
         </Box>
 
