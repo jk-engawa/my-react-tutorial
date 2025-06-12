@@ -57,7 +57,7 @@ function DiaryForm() {
   const { diaries } = useAppSelector((state) => state.diary);
 
   const [dateTime, setDateTime] = useState<Date | null>(new Date());
-  const [mood, setMood] = useState<number>(3);
+  const [mood, setMood] = useState<number | null>(null);
   const [moodDetails, setMoodDetails] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [content, setContent] = useState("");
@@ -74,7 +74,11 @@ function DiaryForm() {
 
   // 気分が変更されたら画像を生成
   useEffect(() => {
+    if (mood !== null) {
     generateMoodImage(mood, moodDetails).then(setMoodImage);
+    } else {
+      setMoodImage('');
+    }
   }, [mood, moodDetails]);
 
   // タグごとの日記数をカウント
@@ -150,7 +154,7 @@ function DiaryForm() {
   };
 
   const handleMoodRemove = () => {
-    setMood(3); // デフォルトの「ふつう」に戻す
+    setMood(null); // nullに戻す
     setMoodDetails([]);
   };
 
@@ -255,7 +259,7 @@ function DiaryForm() {
     navigate("/", { replace: true });
   };
 
-  const currentMoodOption = MOODS[mood as MoodLevel];
+  const currentMoodOption = mood !== null ? MOODS[mood as MoodLevel] : null;
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -288,7 +292,8 @@ function DiaryForm() {
             気分と写真
           </Typography>
           
-          {allImages.length === 0 ? (
+          {allImages.length === 0 && mood === null ? (
+            // 何もない初期状態
             <Box display="flex" gap={2}>
           <Button
             variant="outlined"
@@ -308,6 +313,8 @@ function DiaryForm() {
             </Box>
           ) : (
             <>
+              {/* 画像がある場合はギャラリー表示 */}
+              {allImages.length > 0 && (
               <Box mb={2}>
                 <PhotoGallery
                   photos={allImages}
@@ -318,15 +325,18 @@ function DiaryForm() {
                   onMoodClick={() => setMoodSelectorOpen(true)}
                 />
               </Box>
+              )}
+              
+              {/* 追加ボタン */}
               <Box display="flex" gap={1}>
-                {!moodImage && (
+                {mood === null && (
                   <Button
                     variant="outlined"
                     size="small"
                     onClick={() => setMoodSelectorOpen(true)}
                     startIcon={<MoodIcon />}
                   >
-                    気分を追加
+                    気分を選択
                   </Button>
                 )}
                 <Button

@@ -52,9 +52,11 @@ function DiaryList() {
         const items: PhotoItem[] = [];
         
         // 気分画像を生成
+        if (diary.mood !== null) {
         const moodImageSrc = await generateMoodImage(diary.mood, diary.moodDetails);
         if (moodImageSrc) {
           items.push({ src: moodImageSrc, type: 'mood' });
+          }
         }
         
         // 写真を追加

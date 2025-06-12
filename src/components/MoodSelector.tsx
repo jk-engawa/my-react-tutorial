@@ -18,7 +18,7 @@ import { type MoodLevel } from "../types";
 interface MoodSelectorProps {
   open: boolean;
   onClose: () => void;
-  currentMood: number;
+  currentMood: number | null;
   currentMoodDetails?: string[];
   onConfirm: (mood: number, moodDetails: string[]) => void;
 }
@@ -30,13 +30,13 @@ function MoodSelector({
   currentMoodDetails,
   onConfirm,
 }: MoodSelectorProps) {
-  const [mood, setMood] = useState<number>(currentMood);
+  const [mood, setMood] = useState<number>(currentMood || 3);
   const [moodDetails, setMoodDetails] = useState<string[]>(
     currentMoodDetails || [],
   );
 
   useEffect(() => {
-    setMood(currentMood);
+    setMood(currentMood || 3);
     setMoodDetails(currentMoodDetails || []);
   }, [currentMood, currentMoodDetails, open]);
 

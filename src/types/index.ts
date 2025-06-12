@@ -1,7 +1,7 @@
 export interface Diary {
   id: string; // UUIDに変更
   date: string;
-  mood: number; // 1-5の数値に変更
+  mood: number | null; // 1-5の数値に変更
   moodDetails: string[]; // 詳細な気持ち
   tags: string[];
   content: string;

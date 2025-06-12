@@ -54,7 +54,10 @@ function DiaryDetail() {
       setDiary(diaryData);
       
       // 気分画像を生成して写真と統合
-      const moodImageSrc = await generateMoodImage(diaryData.mood, diaryData.moodDetails);
+      var moodImageSrc = null;
+      if (diaryData?.mood) {
+        moodImageSrc = await generateMoodImage(diaryData.mood, diaryData.moodDetails);
+      }
       const images: PhotoItem[] = [];
       
       if (moodImageSrc) {
