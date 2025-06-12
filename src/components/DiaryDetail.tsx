@@ -27,8 +27,10 @@ import { useAppDispatch } from "../store/hooks";
 import { deleteDiary } from "../store/diarySlice";
 import { diaryDB } from "../database/db";
 import { MOODS } from "../constants";
-import { type Diary, type MoodLevel } from "../types";
+import { type Diary, type MoodLevel, type PhotoItem } from "../types";
 import PhotoGallery from "./PhotoGallery";
+import { generateMoodImage } from '../utils/moodImageGenerator';
+
 
 function DiaryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -37,7 +39,8 @@ function DiaryDetail() {
   const [diary, setDiary] = useState<Diary | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [allImages, setAllImages] = useState<PhotoItem[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -49,6 +52,20 @@ function DiaryDetail() {
     const diaryData = await diaryDB.getById(id!);
     if (diaryData) {
       setDiary(diaryData);
+      
+      // 気分画像を生成して写真と統合
+      const moodImageSrc = await generateMoodImage(diaryData.mood, diaryData.moodDetails);
+      const images: PhotoItem[] = [];
+      
+      if (moodImageSrc) {
+        images.push({ src: moodImageSrc, type: 'mood' });
+      }
+      
+      diaryData.photos?.forEach((photo) => {
+        images.push({ src: photo, type: 'photo' });
+      });
+      
+      setAllImages(images);
     }
   };
 
@@ -98,33 +115,13 @@ function DiaryDetail() {
       </Box>
 
       <Paper sx={{ p: 3 }}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={3}
-        >
-          <Box>
+        <Box mb={3}>
             <Typography variant="h6">
-              {format(new Date(diary.date), "yyyy年MM月dd日 (E)", {
-                locale: ja,
-              })}
+            {format(new Date(diary.date), 'yyyy年MM月dd日 (E)', { locale: ja })}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {format(new Date(diary.date), "HH:mm")}
+            {format(new Date(diary.date), 'HH:mm')}
             </Typography>
-          </Box>
-          <Box textAlign="center">
-            <Typography variant="h3">{moodOption?.icon || "😐"}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {moodOption?.label}
-            </Typography>
-            {diary.moodDetails && (
-              <Typography variant="caption" color="text.secondary">
-                （{diary.moodDetails}）
-              </Typography>
-            )}
-          </Box>
         </Box>
 
         {diary.tags && diary.tags.length > 0 && (
@@ -135,18 +132,12 @@ function DiaryDetail() {
           </Box>
         )}
 
-        {diary.photos && diary.photos.length > 0 && (
+        {allImages.length > 0 && (
           <Box mb={3}>
             <PhotoGallery
-              photos={diary.photos}
-              columns={
-                diary.photos.length === 1
-                  ? 1
-                  : diary.photos.length === 2
-                    ? 2
-                    : 3
-              }
-              height={diary.photos.length === 1 ? 300 : 200}
+              photos={allImages} 
+              columns={allImages.length === 1 ? 1 : allImages.length === 2 ? 2 : 3}
+              height={allImages.length === 1 ? 300 : 200}
             />
           </Box>
         )}

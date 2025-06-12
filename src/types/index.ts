@@ -24,3 +24,11 @@ export interface DiaryState {
   error: string | null;
   selectedTag: string; // ALLまたは特定のタグ
 }
+
+export type PhotoType = 'photo' | 'mood';
+
+export interface PhotoItem {
+  src: string;
+  type: PhotoType;
+  index?: number;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -26,7 +26,10 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchDiaries, setSelectedTag } from "../store/diarySlice";
 import { MOODS, SAMPLE_TAGS } from "../constants";
 import PhotoThumbnail from "./PhotoThumbnail";
-import { type Diary, type MoodLevel } from "../types";
+import { type Diary, type MoodLevel, type PhotoItem } from "../types";
+import { generateMoodImage } from '../utils/moodImageGenerator';
+import PhotoThumbnailExtended from './PhotoThumbnailExtended';
+
 
 function DiaryList() {
   const dispatch = useAppDispatch();
@@ -34,6 +37,41 @@ function DiaryList() {
   const { diaries, loading, selectedTag } = useAppSelector(
     (state) => state.diary,
   );
+  const [diaryImages, setDiaryImages] = useState<Record<string, PhotoItem[]>>({});
+  
+  useEffect(() => {
+    dispatch(fetchDiaries());
+  }, [dispatch]);
+
+  // 各日記の気分画像を生成
+  useEffect(() => {
+    const generateImages = async () => {
+      const images: Record<string, PhotoItem[]> = {};
+      
+      for (const diary of diaries) {
+        const items: PhotoItem[] = [];
+        
+        // 気分画像を生成
+        const moodImageSrc = await generateMoodImage(diary.mood, diary.moodDetails);
+        if (moodImageSrc) {
+          items.push({ src: moodImageSrc, type: 'mood' });
+        }
+        
+        // 写真を追加
+        diary.photos?.forEach((photo) => {
+          items.push({ src: photo, type: 'photo' });
+        });
+        
+        images[diary.id] = items;
+      }
+      
+      setDiaryImages(images);
+    };
+    
+    if (diaries.length > 0) {
+      generateImages();
+    }
+  }, [diaries]);
 
   useEffect(() => {
     dispatch(fetchDiaries());
@@ -221,19 +259,6 @@ function DiaryList() {
                               {format(new Date(diary.date), "HH:mm")}
                             </Typography>
                           </Box>
-                          <Box textAlign="right">
-                            <Typography variant="h4">
-                              {MOODS[diary.mood as MoodLevel]?.icon || "😐"}
-                            </Typography>
-                            {diary.moodDetails && (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {diary.moodDetails}
-                              </Typography>
-                            )}
-                          </Box>
                         </Box>
 
                         {diary.tags && diary.tags.length > 0 && (
@@ -262,9 +287,9 @@ function DiaryList() {
                           {truncateContent(diary.content)}
                         </Typography>
 
-                        {diary.photos && diary.photos.length > 0 && (
+                        {diaryImages[diary.id] && diaryImages[diary.id].length > 0 && (
                           <Box mt={1}>
-                            <PhotoThumbnail photos={diary.photos} />
+                            <PhotoThumbnailExtended photos={diaryImages[diary.id]} />
                           </Box>
                         )}
                       </CardContent>

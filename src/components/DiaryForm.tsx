@@ -38,11 +38,12 @@ import {
 } from "../constants/placeholders";
 import { convertToBase64 } from "../utils/imageHandler";
 import { diaryDB } from "../database/db";
-import { type MoodLevel, type Diary } from "../types";
+import { type MoodLevel, type Diary, type PhotoItem } from "../types";
 import PhotoGallery from "./PhotoGallery";
 import ImageUploadInfo from "./ImageUploadInfo";
 import MoodSelector from "./MoodSelector";
 import { v4 as uuidv4 } from "uuid";
+import { generateMoodImage } from '../utils/moodImageGenerator';
 
 function DiaryForm() {
   const navigate = useNavigate();
@@ -69,6 +70,12 @@ function DiaryForm() {
   const [totalCount, setTotalCount] = useState(0);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
   const [existingDiary, setExistingDiary] = useState<Diary | null>(null);
+  const [moodImage, setMoodImage] = useState<string>('');
+
+  // 気分が変更されたら画像を生成
+  useEffect(() => {
+    generateMoodImage(mood, moodDetails).then(setMoodImage);
+  }, [mood, moodDetails]);
 
   // タグごとの日記数をカウント
   const tagCounts = useMemo(() => {
@@ -133,12 +140,47 @@ function DiaryForm() {
       setSelectedTags(diary.tags || []);
       setContent(diary.content);
       setPhotos(diary.photos || []);
+      setExistingDiary(diary);
     }
   };
 
   const handleMoodConfirm = (newMood: number, newMoodDetails: string[]) => {
     setMood(newMood);
     setMoodDetails(newMoodDetails);
+  };
+
+  const handleMoodRemove = () => {
+    setMood(3); // デフォルトの「ふつう」に戻す
+    setMoodDetails([]);
+  };
+
+  // 写真と気分画像を統合した配列を作成
+  const allImages = useMemo((): PhotoItem[] => {
+    const items: PhotoItem[] = [];
+    
+    // 気分画像を最初に追加
+    if (moodImage) {
+      items.push({ src: moodImage, type: 'mood' });
+    }
+    
+    // 写真を追加
+    photos.forEach((photo) => {
+      items.push({ src: photo, type: 'photo' });
+    });
+    
+    return items;
+  }, [photos, moodImage]);
+
+  // 統合された削除ハンドラー
+  const handleImageRemove = (index: number) => {
+    const item = allImages[index];
+    if (item.type === 'mood') {
+      handleMoodRemove();
+    } else {
+      // 気分画像がある場合はインデックスを調整
+      const photoIndex = moodImage ? index - 1 : index;
+      handleRemovePhoto(photoIndex);
+    }
   };
 
   const handleTagToggle = (tag: string) => {
@@ -243,70 +285,18 @@ function DiaryForm() {
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
-            今日の気分
+            気分と写真
           </Typography>
+          
+          {allImages.length === 0 ? (
+            <Box display="flex" gap={2}>
           <Button
             variant="outlined"
-            fullWidth
             onClick={() => setMoodSelectorOpen(true)}
             startIcon={<MoodIcon />}
-            sx={{
-              justifyContent: "flex-start",
-              py: 1.5,
-              textTransform: "none",
-            }}
-          >
-            <Box display="flex" alignItems="center" gap={2} width="100%">
-              <Typography variant="h5">{currentMoodOption.icon}</Typography>
-              <Box>
-                <Typography variant="body1">
-                  {currentMoodOption.label}
-                </Typography>
-                {moodDetails.length > 0 && (
-                  <Typography variant="caption" color="text.secondary">
-                    {moodDetails.join("、")}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
+              >
+                気分を選択
           </Button>
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            タグ
-          </Typography>
-          <Box display="flex" flexWrap="wrap" gap={1}>
-            {SAMPLE_TAGS.filter((tag) => tag !== "ALL").map((tag) => (
-              <Chip
-                key={tag}
-                label={tag}
-                color={selectedTags.includes(tag) ? "primary" : "default"}
-                onClick={() => handleTagToggle(tag)}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            label="日記の内容"
-            multiline
-            rows={4}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            fullWidth
-            inputRef={contentInputRef}
-            autoFocus={!id}
-            placeholder={placeholder}
-          />
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            写真
-          </Typography>
-          <Box>
             <Button
               variant="outlined"
               startIcon={<PhotoCameraIcon />}
@@ -315,6 +305,43 @@ function DiaryForm() {
             >
               写真を追加
             </Button>
+            </Box>
+          ) : (
+            <>
+              <Box mb={2}>
+                <PhotoGallery
+                  photos={allImages}
+                  columns={3}
+                  height={allImages.length === 1 ? 300 : 200}
+                  editable={true}
+                  onRemove={handleImageRemove}
+                  onMoodClick={() => setMoodSelectorOpen(true)}
+                />
+              </Box>
+              <Box display="flex" gap={1}>
+                {!moodImage && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setMoodSelectorOpen(true)}
+                    startIcon={<MoodIcon />}
+                  >
+                    気分を追加
+                  </Button>
+                )}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<PhotoCameraIcon />}
+                  onClick={handlePhotoMenuOpen}
+                  disabled={isProcessingImages}
+                >
+                  写真を追加
+                </Button>
+              </Box>
+            </>
+          )}
+
             <Menu
               anchorEl={photoMenuAnchor}
               open={Boolean(photoMenuAnchor)}
@@ -343,7 +370,6 @@ function DiaryForm() {
               style={{ display: "none" }}
               onChange={handlePhotoSelect}
             />
-          </Box>
 
           <ImageUploadInfo
             isProcessing={isProcessingImages}
@@ -351,24 +377,41 @@ function DiaryForm() {
             totalCount={totalCount}
           />
 
-          {photos.length > 0 && (
-            <Box mt={2}>
-              <PhotoGallery
-                photos={photos}
-                columns={3}
-                height={photos.length === 1 ? 300 : 200}
-                editable={true}
-                onRemove={handleRemovePhoto}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ mt: 1, display: "block" }}
-              >
+          {allImages.length > 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 ※ 画像は自動的に最適化されます
               </Typography>
-            </Box>
           )}
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            タグ
+          </Typography>
+          <Box display="flex" flexWrap="wrap" gap={1}>
+            {SAMPLE_TAGS.filter(tag => tag !== 'ALL').map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                color={selectedTags.includes(tag) ? 'primary' : 'default'}
+                onClick={() => handleTagToggle(tag)}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            label="日記の内容"
+            placeholder={placeholder}
+            multiline
+            rows={4}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            fullWidth
+            inputRef={contentInputRef}
+            autoFocus={!id}
+          />
         </Box>
 
         <Box display="flex" gap={2}>
