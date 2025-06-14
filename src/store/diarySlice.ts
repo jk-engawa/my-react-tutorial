@@ -1,88 +1,127 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { diaryDB } from "../database/db";
-import { type Diary, type DiaryState } from "../types";
-
-// 非同期アクション
-export const fetchDiaries = createAsyncThunk("diary/fetchDiaries", async () => {
-  const diaries = await diaryDB.getAll();
-  return diaries;
-});
-
-export const addDiary = createAsyncThunk(
-  "diary/addDiary",
-  async (diaryData: Diary) => {
-    await diaryDB.add(diaryData);
-    return diaryData;
-  },
-);
-
-export const updateDiary = createAsyncThunk(
-  "diary/updateDiary",
-  async ({ id, data }: { id: string; data: Partial<Diary> }) => {
-    await diaryDB.update(id, data);
-    return { id, data };
-  },
-);
-
-export const deleteDiary = createAsyncThunk(
-  "diary/deleteDiary",
-  async (id: string) => {
-    await diaryDB.delete(id);
-    return id;
-  },
-);
+import type { PayloadAction } from "@reduxjs/toolkit"
+import { createAppSlice } from "./createAppSlice"
+import { diaryDB } from "../database/db"
+import { type Diary, type DiaryState } from "../types"
 
 const initialState: DiaryState = {
   diaries: [],
   loading: false,
   error: null,
   selectedTag: "ALL",
-};
+}
 
-const diarySlice = createSlice({
+// Using the new createAppSlice with integrated async thunk support
+export const diarySlice = createAppSlice({
   name: "diary",
   initialState,
-  reducers: {
-    setSelectedTag: (state, action) => {
-      state.selectedTag = action.payload;
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      // Fetch diaries
-      .addCase(fetchDiaries.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchDiaries.fulfilled, (state, action) => {
-        state.loading = false;
-        state.diaries = action.payload;
-      })
-      .addCase(fetchDiaries.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || "Failed to fetch diaries";
-      })
-      // Add diary
-      .addCase(addDiary.fulfilled, (state, action) => {
-        state.diaries.unshift(action.payload);
-      })
-      // Update diary
-      .addCase(updateDiary.fulfilled, (state, action) => {
+  reducers: create => ({
+    // 同期的なreducers
+    setSelectedTag: create.reducer((state, action: PayloadAction<string>) => {
+      state.selectedTag = action.payload
+    }),
+    
+    // 非同期アクション - fetchDiaries
+    fetchDiaries: create.asyncThunk(
+      async () => {
+        const diaries = await diaryDB.getAll()
+        return diaries
+      },
+      {
+        pending: (state) => {
+          state.loading = true
+          state.error = null
+        },
+        fulfilled: (state, action) => {
+          state.loading = false
+          state.diaries = action.payload
+        },
+        rejected: (state, action) => {
+          state.loading = false
+          state.error = action.error.message || "Failed to fetch diaries"
+        },
+      }
+    ),
+    
+    // 非同期アクション - addDiary
+    addDiary: create.asyncThunk(
+      async (diaryData: Diary) => {
+        await diaryDB.add(diaryData)
+        return diaryData
+      },
+      {
+        fulfilled: (state, action) => {
+          state.diaries.unshift(action.payload)
+        },
+      }
+    ),
+    
+    // 非同期アクション - updateDiary
+    updateDiary: create.asyncThunk(
+      async ({ id, data }: { id: string; data: Partial<Diary> }) => {
+        await diaryDB.update(id, data)
+        return { id, data }
+      },
+      {
+        fulfilled: (state, action) => {
         const index = state.diaries.findIndex(
-          (d) => d.id === action.payload.id,
-        );
+            (d) => d.id === action.payload.id
+          )
         if (index !== -1) {
           state.diaries[index] = {
             ...state.diaries[index],
             ...action.payload.data,
-          };
+            }
         }
-      })
-      // Delete diary
-      .addCase(deleteDiary.fulfilled, (state, action) => {
-        state.diaries = state.diaries.filter((d) => d.id !== action.payload);
-      });
+        },
+      }
+    ),
+    
+    // 非同期アクション - deleteDiary
+    deleteDiary: create.asyncThunk(
+      async (id: string) => {
+        await diaryDB.delete(id)
+        return id
+      },
+      {
+        fulfilled: (state, action) => {
+          state.diaries = state.diaries.filter((d) => d.id !== action.payload)
+        },
+      }
+    ),
+  }),
+  
+  // セレクターの定義
+  selectors: {
+    selectAllDiaries: (diary) => diary.diaries,
+    selectDiaryById: (diary, id: string) => 
+      diary.diaries.find(d => d.id === id),
+    selectDiariesByTag: (diary) => {
+      if (diary.selectedTag === "ALL") {
+        return diary.diaries
+      }
+      return diary.diaries.filter(d => d.tags?.includes(diary.selectedTag))
+    },
+    selectSelectedTag: (diary) => diary.selectedTag,
+    selectIsLoading: (diary) => diary.loading,
+    selectError: (diary) => diary.error,
   },
-});
+})
 
-export const { setSelectedTag } = diarySlice.actions;
-export default diarySlice.reducer;
+// Action creators are generated for each case reducer function.
+export const {
+  setSelectedTag,
+  fetchDiaries,
+  addDiary,
+  updateDiary,
+  deleteDiary,
+} = diarySlice.actions
+
+// Selectors returned by `slice.selectors` take the root state as their first argument.
+export const {
+  selectAllDiaries,
+  selectDiaryById,
+  selectDiariesByTag,
+  selectSelectedTag,
+  selectIsLoading,
+  selectError,
+} = diarySlice.selectors

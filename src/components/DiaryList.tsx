@@ -23,7 +23,13 @@ import {
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchDiaries, setSelectedTag } from "../store/diarySlice";
+import {
+  setSelectedTag,
+  fetchDiaries,
+  selectIsLoading,
+  selectAllDiaries,
+  selectSelectedTag
+} from "../store/diarySlice";
 import { MOODS, SAMPLE_TAGS } from "../constants";
 import PhotoThumbnail from "./PhotoThumbnail";
 import { type Diary, type MoodLevel } from "../types";
@@ -31,9 +37,9 @@ import { type Diary, type MoodLevel } from "../types";
 function DiaryList() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { diaries, loading, selectedTag } = useAppSelector(
-    (state) => state.diary,
-  );
+  const diaries = useAppSelector((state) => selectAllDiaries(state));
+  const loading = useAppSelector((state) => selectIsLoading(state));
+  const selectedTag = useAppSelector((state) => selectSelectedTag(state));
 
   useEffect(() => {
     dispatch(fetchDiaries());

@@ -1,12 +1,17 @@
-import { configureStore } from "@reduxjs/toolkit";
-import diaryReducer from "./diarySlice";
+import type { Action, ThunkAction } from "@reduxjs/toolkit"
+import { combineSlices, configureStore } from "@reduxjs/toolkit"
+import { setupListeners } from "@reduxjs/toolkit/query"
+import { diarySlice } from "../store/diarySlice"
 
-export const store = configureStore({
-  reducer: {
-    diary: diaryReducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
+const rootReducer = combineSlices(diarySlice)
+
+export type RootState = ReturnType<typeof rootReducer>
+
+export const makeStore = (preloadedState?: Partial<RootState>) => {
+  const store = configureStore({
+    reducer: rootReducer,
+    middleware: (getDefaultMiddleware) => {
+      return getDefaultMiddleware({
       serializableCheck: {
         // Dexieのプロミスや日付オブジェクトを無視
         ignoredActions: [
@@ -15,8 +20,23 @@ export const store = configureStore({
         ],
         ignoredPaths: ["diary.diaries"],
       },
-    }),
-});
+      })
+    },
+    preloadedState,
+  })
+  setupListeners(store.dispatch)
+  return store
+}
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export const store = makeStore()
+
+// Infer the type of `store`
+export type AppStore = typeof store
+// Infer the `AppDispatch` type from the store itself
+export type AppDispatch = AppStore["dispatch"]
+export type AppThunk<ThunkReturnType = void> = ThunkAction<
+  ThunkReturnType,
+  RootState,
+  unknown,
+  Action
+>

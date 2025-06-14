@@ -23,12 +23,17 @@ import {
 } from "@mui/icons-material";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { useAppDispatch } from "../store/hooks";
-import { deleteDiary } from "../store/diarySlice";
-import { diaryDB } from "../database/db";
 import { MOODS } from "../constants";
 import { type Diary, type MoodLevel } from "../types";
 import PhotoGallery from "./PhotoGallery";
+
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  fetchDiaries,
+  deleteDiary,
+  selectDiaryById,
+} from "../store/diarySlice";
+
 
 function DiaryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,14 +44,19 @@ function DiaryDetail() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
+  const diaryData = useAppSelector((state) => selectDiaryById(state, id!));
+
   useEffect(() => {
+    // 日記データを取得
+    dispatch(fetchDiaries());
+    
     if (id) {
-      loadDiary();
+      loadDiary(diaryData);
     }
   }, [id]);
 
-  const loadDiary = async () => {
-    const diaryData = await diaryDB.getById(id!);
+  const loadDiary = async (diaryData?: Diary) => {
+
     if (diaryData) {
       setDiary(diaryData);
     }

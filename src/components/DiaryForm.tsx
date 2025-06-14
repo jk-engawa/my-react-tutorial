@@ -28,7 +28,15 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { PickersTextField } from "@mui/x-date-pickers";
 import { ja } from "date-fns/locale";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { addDiary, updateDiary, fetchDiaries } from "../store/diarySlice";
+import {
+  addDiary,
+  updateDiary,
+  fetchDiaries,
+  selectAllDiaries,
+  selectDiaryById,
+} from "../store/diarySlice";
+
+
 import { MOODS, SAMPLE_TAGS } from "../constants";
 import {
   TAG_PLACEHOLDERS,
@@ -37,7 +45,6 @@ import {
   MULTI_TAG_PLACEHOLDERS,
 } from "../constants/placeholders";
 import { convertToBase64 } from "../utils/imageHandler";
-import { diaryDB } from "../database/db";
 import { type MoodLevel, type Diary } from "../types";
 import PhotoGallery from "./PhotoGallery";
 import ImageUploadInfo from "./ImageUploadInfo";
@@ -51,9 +58,6 @@ function DiaryForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const contentInputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Redux stateから全日記を取得
-  const { diaries } = useAppSelector((state) => state.diary);
 
   const [dateTime, setDateTime] = useState<Date | null>(new Date());
   const [mood, setMood] = useState<number>(3);
@@ -69,6 +73,10 @@ function DiaryForm() {
   const [totalCount, setTotalCount] = useState(0);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
   const [existingDiary, setExistingDiary] = useState<Diary | null>(null);
+
+  // Redux stateから全日記を取得
+  const diaries = useAppSelector((state) => selectAllDiaries(state));
+  const diary = id !== null ? useAppSelector(state => selectDiaryById(state, id!)) : null;
 
   // タグごとの日記数をカウント
   const tagCounts = useMemo(() => {
@@ -115,8 +123,8 @@ function DiaryForm() {
     // 日記データを取得（タグカウントのため）
     dispatch(fetchDiaries());
 
-    if (id) {
-      loadDiary();
+    if (id && diary) {
+      loadDiary(diary);
     }
     // 新規作成時は自由記述欄にフォーカス
     setTimeout(() => {
@@ -124,8 +132,7 @@ function DiaryForm() {
     }, 100);
   }, [id]);
 
-  const loadDiary = async () => {
-    const diary = await diaryDB.getById(id!);
+  const loadDiary = async (diary: Diary) => {
     if (diary) {
       setDateTime(new Date(diary.date));
       setMood(diary.mood);
